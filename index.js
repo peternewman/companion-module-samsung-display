@@ -50,6 +50,8 @@ class SamsungDisplayInstance extends InstanceBase {
 		this.config = config
 		this.DATA = {}
 
+		this.INTERVAL = null //used to poll for updates
+
 		this.CHOICES_ON_OFF = [
 			{ id: 'off', label: 'Off' },
 			{ id: 'on', label: 'On' },
@@ -178,6 +180,29 @@ class SamsungDisplayInstance extends InstanceBase {
 		this.init_feedbacks()
 		this.init_presets()
 		this.init_tcp()
+
+		this.setupInterval()
+	}
+
+	setupInterval() {
+		let self = this
+
+		self.stopInterval()
+
+		if (self.config.polling !== undefined && self.config.polling && self.config.interval > 0) {
+			self.INTERVAL = setInterval(self.getInformation.bind(self), self.config.interval)
+			self.log('info', 'Starting Update Interval: Every ' + self.config.interval + 'ms')
+		}
+	}
+
+	stopInterval() {
+		let self = this
+
+		if (self.INTERVAL !== null) {
+			self.log('info', 'Stopping Update Interval.')
+			clearInterval(self.INTERVAL)
+			self.INTERVAL = null
+		}
 	}
 
 	configUpdated(config) {
@@ -281,11 +306,9 @@ class SamsungDisplayInstance extends InstanceBase {
 						// Sernum, screensize and possibly others only work when the device is powered on...
 						if (data.req == 'status' && self.DATA['power'] == 'on') {
 							// TODO(Peter): || data.req == 'power' - Need to sleep if we've only just powered on...
+							// TODO(Peter): Only need to successfully fetch these once
+							self.dev.process('model?', 'screensize?', 'sernum?', 'software?')
 							self.dev.process(
-								'model?',
-								'screensize?',
-								'sernum?',
-								'software?',
 								'contrast?',
 								'brightness?',
 								'sharpness?',
@@ -305,6 +328,12 @@ class SamsungDisplayInstance extends InstanceBase {
 				self.updateStatus(InstanceStatus.UnknownWarning, 'Unknown comms error')
 			}
 		})
+
+		self.getInformation()
+	}
+
+	getInformation() {
+		let self = this
 
 		// We use lots of the statuses and expose the others as variables
 		// It's also generally useful to trigger a connectionStatus message
@@ -342,11 +371,41 @@ class SamsungDisplayInstance extends InstanceBase {
 				max: 254,
 				regex: Regex.Number,
 			},
+			{
+				type: 'checkbox',
+				id: 'polling',
+				label: 'Enable Polling',
+				width: 12,
+				default: false,
+			},
+			{
+				type: 'static-text',
+				id: 'intervalInfo',
+				width: 9,
+				label: 'Update Interval',
+				value: 'Please enter the amount of time in milliseconds to request new information from the device.',
+				isVisible: (configValues) => configValues.polling == true,
+			},
+			{
+				type: 'number',
+				id: 'interval',
+				label: 'Update Interval',
+				width: 3,
+				default: 5000,
+				min: 0,
+				step: 1,
+				isVisible: (configValues) => configValues.polling == true,
+			},
 		]
 	}
 
 	// When module gets deleted
 	destroy() {
+		if (this.INTERVAL) {
+			clearInterval(this.INTERVAL)
+			this.INTERVAL = null
+		}
+
 		if (this.dev !== undefined) {
 			this.dev.process('#close')
 			delete this.dev
