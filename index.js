@@ -254,6 +254,7 @@ class SamsungDisplayInstance extends InstanceBase {
 						self.updateStatus(InstanceStatus.Disconnected)
 						// Try to reconnect
 						if (self.dev !== undefined) {
+							// TODO(Peter): Do some sort of backoff?
 							self.dev.process('#pause 1000', '#connect')
 						}
 						break
