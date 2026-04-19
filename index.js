@@ -318,6 +318,9 @@ class SamsungDisplayInstance extends InstanceBase {
 								'wallmode?',
 								'wallon?',
 								'walldef?',
+								'displayStatus?',
+								'pMode?',
+								'video?',
 							)
 						}
 						break
@@ -502,8 +505,24 @@ class SamsungDisplayInstance extends InstanceBase {
 			variableId: 'Wall_SNo',
 		})
 
+		variableDefinitions.push({
+			name: 'No Sync',
+			variableId: 'No_Sync_Error',
+		})
+
+		variableDefinitions.push({
+			name: 'Temperature',
+			variableId: 'Cur_Temp',
+		})
+
+		variableDefinitions.push({
+			name: 'Picture Mode',
+			variableId: 'pMode',
+		})
+
 		// TODO(Peter): Add and expose other variables
 		// "aspect":1,"NTimeNF":0,"FTimeNF":0,"Wall_Div":"off","Wall_SNo":0
+		// "Lamp_Error":"normal","Temperature_Error":"normal","Bright_Sensor_Error":0,"Fan_Error":0
 
 		this.setVariableDefinitions(variableDefinitions)
 	}
